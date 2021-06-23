@@ -19,7 +19,8 @@ def self_play(net, num_games, num_simulations):
 			while not game.is_over():
 				pi, action, root = mcts(net, game, num_simulations, root) # Reuse MCTS results
 
-				game_data.append([game.get_state(), pi, game.to_play()])
+				for s in game.get_state_symmetries():
+					game_data.append([s, pi, game.to_play()])
 				game.apply(action)
 				root = root.children[action]
 

@@ -27,6 +27,16 @@ class Game():
 	def get_state(self):
 		return torch.from_numpy(self.encode_board()).float()
 
+	def get_state_symmetries(self):
+		s = self.get_state()
+		s_mirror = s.flip(2)
+
+		symmetries = [s]
+		if not s.equal(s_mirror):
+			symmetries.append(s_mirror)
+
+		return symmetries
+
 	def apply(self, a: int):
 		if self.result is not None:
 			raise Exception("Tried to play a move in a finished game")
