@@ -1,7 +1,6 @@
 from game import Game
 import math
 import numpy as np
-import torch
 
 class Node():
 	def __init__(self, P: float, to_play: int):
@@ -103,7 +102,7 @@ def expand(node: Node, game: Game, net):
 			prior /= p_sum
 		else:
 			prior = 1.0 / len(actions)
-			print("Warning: policy sum is zero")
+			print("Warning: policy sum is zero (overfitting is a possibility)")
 
 		node.children[action] = Node(prior, -node.to_play)
 

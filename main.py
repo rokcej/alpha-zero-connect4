@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 
 SAVE_DIR  = "data/models"
 
-NUM_STEPS = 5
+NUM_STEPS = 100
 # Self-play
-NUM_GAMES = 5
+NUM_GAMES = 100
 NUM_SIMULATIONS = 25 # Originally 800
 # Training
 NUM_EPOCHS = 10
