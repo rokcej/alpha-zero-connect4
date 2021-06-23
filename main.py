@@ -27,18 +27,19 @@ if __name__ == "__main__":
 	save_file = os.path.join(SAVE_DIR, "model.pt")
 
 	step_start = 0
+	avg_losses = []
 	if os.path.isfile(save_file):
 		print("Loading old network...")
 		load_checkpoint = torch.load(save_file)
 		net.load_state_dict(load_checkpoint["state_dict"])
 		step_start = load_checkpoint["step"]
+		avg_losses = load_checkpoint["avg_losses"]
 	else:
 		print("Initializing new network...")
 		if not os.path.exists(SAVE_DIR):
 			os.makedirs(SAVE_DIR)
 		net.initialize_parameters()
 
-	avg_losses = []
 
 	for step in range(step_start, step_start + NUM_STEPS):
 		print(f"Step {step + 1}")
