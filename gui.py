@@ -46,7 +46,7 @@ class GUI():
 	def draw_pieces(self):
 		for x in range(7):
 			for y in range(6):
-				piece = self.board[y][x]
+				piece = self.board[y, x]
 				if piece != 0:
 					cx = (x + 0.5) * DX
 					cy = (5.5 - y) * DY
@@ -70,9 +70,9 @@ class GUI():
 
 
 if __name__ == "__main__":
-	board = [[0 for x in range(7)] for y in range(6)]
-	board[2][4] = 1
-	board[5][6] = -1
+	board = np.zeros((6, 7), dtype=np.int)
+	board[2, 4] = 1
+	board[5, 6] = -1
 	gui = GUI(board)
 	while gui.running:
 		gui.draw()

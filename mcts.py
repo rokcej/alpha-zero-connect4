@@ -31,7 +31,7 @@ def mcts(net, game: Game, num_simulations, root=None):
 		expand(root, game, net)
 		# Dirichlet noise
 		actions = root.children.keys()
-		noise = np.random.gamma(0.3, 1, len(actions))
+		noise = np.random.gamma(1.0, 1, len(actions)) # 0.3 for chess
 		frac = 0.25
 		for a, n in zip(actions, noise):
 			root.children[a].P = root.children[a].P * (1.0 - frac) + n * frac
@@ -64,7 +64,7 @@ def mcts(net, game: Game, num_simulations, root=None):
 
 	# Get policy
 	temp = 1
-	pi = np.zeros(8 * 8 * 73)
+	pi = np.zeros(game.action_space)
 	N_sum = sum(child.N for child in root.children.values())
 	for action, child in root.children.items():
 		pi[action] = (child.N ** (1.0 / temp)) / N_sum
@@ -74,7 +74,7 @@ def mcts(net, game: Game, num_simulations, root=None):
 	# _, best_action = max([(c.N, a) for a, c in root.children.items()])
 	actions = list(root.children.keys())
 	probs = pi[actions]
-	if game_sim.num_moves() < 30: # Softmax sample
+	if game_sim.num_moves() < 10: # Softmax sample
 		probs = softmax(probs) # Is this necessary?
 		best_action = np.random.choice(actions, p=pi[actions])
 	else: # Max probability

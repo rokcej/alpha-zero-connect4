@@ -2,7 +2,6 @@ from gui import GUI
 from game import Game
 from mcts import mcts
 from network import AlphaZeroNet
-import encoder_decoder as endec
 
 import time
 import torch
@@ -38,7 +37,7 @@ def play_move_player(game: Game, gui: GUI):
 # 	time.sleep(0.5)
 
 def play_move_ai_mcts(game: Game, net: AlphaZeroNet):
-	pi, a, root = mcts(net, game, 200)
+	pi, a, root = mcts(net, game, 50)
 
 	# actions = game.get_actions()
 	# for prob, move, action in zip(pi[actions], [endec.decode_action(action, game.board) for action in actions], actions):
@@ -64,8 +63,8 @@ def play(net: AlphaZeroNet):
 			# play_move_ai_mcts(game, net)
 			# play_move_random(game)
 		else: # Red
-			play_move_player(game, gui)
-			# play_move_ai_mcts(game, net2)
+			# play_move_player(game, gui)
+			play_move_ai_mcts(game, net)
 			# play_move_random(game)
 
 		gui.draw()
@@ -78,15 +77,13 @@ def play(net: AlphaZeroNet):
 		gui.handle_events()
 
 if __name__ == "__main__":
-	play(None)
+	net = AlphaZeroNet()
+	net.cuda()
 
-	# net = AlphaZeroNet()
-	# net.cuda()
-
-	# # net.initialize_parameters()
+	net.initialize_parameters()
 	# net.load_state_dict(torch.load("data/models/model.pt")["state_dict"])
 
-	# net.eval()
+	net.eval()
 
-	# with torch.no_grad():
-	# 	play(net)
+	with torch.no_grad():
+		play(net)

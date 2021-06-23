@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 class SelfPlayDataset(Dataset):
 	def __init__(self, data):
-		self.data = data # List of tuples (s, pi, z)
+		self.data = data # List of lists [s, pi, z]
 
 	def __len__(self):
 		return len(self.data)
@@ -25,13 +25,12 @@ class AlphaZeroLoss(nn.Module):
 
 		return torch.mean(loss_v.view(-1) + loss_p)
 
-def train(net, train_data, num_epochs, batch_size):
+def train(net, train_data, num_epochs, batch_size, learning_rate):
 	train_set = SelfPlayDataset(train_data)
 	train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0)
 	
 	criterion = AlphaZeroLoss()
-	optimizer = optim.Adam(net.parameters(), lr=0.1, weight_decay=1e-6)
-	scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 10, 15], gamma=0.1) # [100, 300, 500]
+	optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=1e-6)
 
 	with tqdm(total=num_epochs, desc="Training", unit="epoch") as prog_bar:
 		for epoch in range(num_epochs):
@@ -50,8 +49,6 @@ def train(net, train_data, num_epochs, batch_size):
 				total_loss += loss.item()
 
 				optimizer.step()
-
-			scheduler.step()
 			
 			prog_bar.set_postfix_str(f"Avg loss = {total_loss/len(train_loader)}")
 			prog_bar.update(1)
