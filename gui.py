@@ -1,5 +1,6 @@
 import pygame
 import os
+import numpy as np
 
 WIDTH = 700
 HEIGHT = 600
@@ -33,8 +34,8 @@ class GUI():
 				self.running = False
 			elif event.type == pygame.MOUSEBUTTONUP:
 				x, y = pygame.mouse.get_pos()
-				f, r = self.get_square(x, y)
-				self.clicked = (f, r)
+				ix, iy = self.get_square(x, y)
+				self.clicked = (ix, iy)
 		
 	def draw_board(self):
 		for y in range(8):
@@ -50,7 +51,8 @@ class GUI():
 					cx = (x + 0.5) * DX
 					cy = (5.5 - y) * DY
 					r = 0.4 * min(DX, DY)
-					pygame.draw.circle(self.screen, PIECE_COLORS[piece - 1], (cx, cy), r)
+					color = YELLOW if piece == 1 else RED
+					pygame.draw.circle(self.screen, color, (cx, cy), r)
 
 	def get_rect(self, file, rank):
 		return pygame.Rect(file * DX, (5 - rank) * DY, (file + 1) * DX, (6 - rank) * DY)
@@ -70,7 +72,7 @@ class GUI():
 if __name__ == "__main__":
 	board = [[0 for x in range(7)] for y in range(6)]
 	board[2][4] = 1
-	board[5][6] = 2
+	board[5][6] = -1
 	gui = GUI(board)
 	while gui.running:
 		gui.draw()
