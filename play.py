@@ -7,6 +7,8 @@ import time
 import torch
 import random
 import time
+import sys
+from tqdm import tqdm
 
 def play_move_player(game: Game, gui: GUI):
 	gui.handle_events()
@@ -37,7 +39,7 @@ def play_move_player(game: Game, gui: GUI):
 # 	time.sleep(0.5)
 
 def play_move_ai_mcts(game: Game, net: AlphaZeroNet):
-	pi, a, root = mcts(net, game, 50)
+	pi, a, root = mcts(net, game, 1)
 
 	# actions = game.get_actions()
 	# for prob, move, action in zip(pi[actions], [endec.decode_action(action, game.board) for action in actions], actions):
@@ -76,6 +78,35 @@ def play(net: AlphaZeroNet):
 		gui.draw()
 		gui.handle_events()
 
+
+def test(net: AlphaZeroNet, num_games):
+	results = { +1: 0, -1: 0, 0: 0 }
+	
+	with tqdm(total=num_games, desc="Playing games", unit="game") as prog_bar:
+		for i_game in range(num_games):
+			game = Game()
+
+			while not game.is_over():
+				if game.to_play() == 1: # Yellow
+					play_move_ai_mcts(game, net)
+					# play_move_random(game)
+				else: # Red
+					# play_move_ai_mcts(game, net)
+					play_move_random(game)
+					
+			
+			results[game.outcome()] += 1
+
+			prog_bar.set_postfix_str(f"Yellow = {results[1]} | Red = {results[-1]} | Draw = {results[0]}")
+			prog_bar.update(1)
+
+	print()
+	print(f"Yellow:\t{100 * results[1] / num_games}%")
+	print(f"Red:\t{100 * results[-1] / num_games}%")
+	print(f"Draw:\t{100 * results[0] / num_games}%")
+	print()
+
+
 if __name__ == "__main__":
 	net = AlphaZeroNet()
 	net.cuda()
@@ -86,4 +117,8 @@ if __name__ == "__main__":
 	net.eval()
 
 	with torch.no_grad():
-		play(net)
+		if len(sys.argv) > 1 and sys.argv[1] == "test":
+			num_games = int(sys.argv[2]) if len(sys.argv) > 2 else 100
+			test(net, num_games)
+		else:
+			play(net)

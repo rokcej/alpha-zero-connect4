@@ -1,6 +1,7 @@
 from game import Game
 import math
 import numpy as np
+import torch
 
 class Node():
 	def __init__(self, P: float, to_play: int):
@@ -44,10 +45,10 @@ def mcts(net, game: Game, num_simulations, root=None):
 		while len(node.children) > 0:
 			# Select action
 			action = None
-			max_score = -math.inf
+			max_score = None
 			for _action, _child in node.children.items():
 				score = ucb(node, _child)
-				if score > max_score:
+				if max_score is None or score > max_score:
 					max_score = score
 					action = _action
 
@@ -68,7 +69,6 @@ def mcts(net, game: Game, num_simulations, root=None):
 	N_sum = sum(child.N for child in root.children.values())
 	for action, child in root.children.items():
 		pi[action] = (child.N ** (1.0 / temp)) / N_sum
-
 
 	# Get best action
 	# _, best_action = max([(c.N, a) for a, c in root.children.items()])
@@ -91,10 +91,7 @@ def expand(node: Node, game: Game, net):
 	####################################################
 	# This part takes up >95% of MCTS computation time #
 	s = game.get_state().cuda().unsqueeze(0)
-	p, v = net(s)
-
-	p = p.squeeze(0).detach().cpu().numpy()
-	v = v.squeeze(0).item()
+	p, v = net.predict_detach(s)
 	####################################################
 
 	actions = game.get_actions()
@@ -102,7 +99,13 @@ def expand(node: Node, game: Game, net):
 
 	for action in actions:
 		prior = p[action].item()
-		node.children[action] = Node(prior / p_sum, -node.to_play)
+		if p_sum > 0.0:
+			prior /= p_sum
+		else:
+			prior = 1.0 / len(actions)
+			print("Warning: policy sum is zero")
+
+		node.children[action] = Node(prior, -node.to_play)
 
 	return v * node.to_play
 	

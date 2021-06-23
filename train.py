@@ -19,9 +19,9 @@ class AlphaZeroLoss(nn.Module):
 	def __init__(self):
 		super(AlphaZeroLoss, self).__init__()
 
-	def forward(self, p, pi, v, z):
+	def forward(self, p_log, pi, v, z):
 		loss_v = ((z - v) ** 2)
-		loss_p = torch.sum(-pi * p, 1)
+		loss_p = -torch.sum(pi * p_log, 1)
 
 		return torch.mean(loss_v.view(-1) + loss_p)
 
@@ -32,9 +32,11 @@ def train(net, train_data, num_epochs, batch_size, learning_rate):
 	criterion = AlphaZeroLoss()
 	optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=1e-6)
 
+	avg_avg_loss = 0.0
+
 	with tqdm(total=num_epochs, desc="Training", unit="epoch") as prog_bar:
 		for epoch in range(num_epochs):
-			total_loss = 0.0
+			avg_loss = 0.0
 			for i, data in enumerate(train_loader, 0):
 				s, pi, z = data
 				s = s.cuda()
@@ -43,12 +45,19 @@ def train(net, train_data, num_epochs, batch_size, learning_rate):
 
 				optimizer.zero_grad()
 
-				p, v = net(s)
-				loss = criterion(p, pi, v, z)
+				p_log, v = net(s)
+				loss = criterion(p_log, pi, v, z)
 				loss.backward()
-				total_loss += loss.item()
+				avg_loss += loss.item()
 
 				optimizer.step()
 			
-			prog_bar.set_postfix_str(f"Avg loss = {total_loss/len(train_loader)}")
+			avg_loss /= len(train_loader)
+			avg_avg_loss += avg_loss
+
+			prog_bar.set_postfix_str(f"Avg loss = {avg_loss}")
 			prog_bar.update(1)
+
+	avg_avg_loss /= num_epochs
+	
+	return avg_avg_loss

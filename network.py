@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 # Connect 4 version
 
+# N.B. The forward pass returns the logarithm of probabilities!
 class AlphaZeroNet(nn.Module):
 	def __init__(self):
 		super(AlphaZeroNet, self).__init__()
@@ -26,7 +27,16 @@ class AlphaZeroNet(nn.Module):
 		out = self.conv_block(s)
 		for i in range(len(self.res_blocks)):
 			out = self.res_blocks[i](out)
-		p, v = self.out_block(out)
+		p_log, v = self.out_block(out)
+
+		return p_log, v
+
+	def predict_detach(self, s):
+		p_log, v = self.forward(s)
+
+		p = torch.exp(p_log)
+		p = p.squeeze(0).detach().cpu().numpy()
+		v = v.squeeze(0).item()
 
 		return p, v
 
@@ -93,7 +103,8 @@ class OutBlock(nn.Module):
 		# p = p.reshape(p.shape[0], -1) # p.reshape(batch_size, -1)
 		p = torch.flatten(p, start_dim=1)
 		p = self.fc1_p(p)
-		p = F.log_softmax(p, dim=1) 
+		p_log = F.log_softmax(p, dim=1) # Use log_softmax for numerical stability
+		# p = F.softmax(p, dim=1)
 
 		# Value head
 		v = self.conv_v(s)
@@ -106,4 +117,4 @@ class OutBlock(nn.Module):
 		v = torch.tanh(v)
 		v = v.reshape(-1)
 
-		return p, v
+		return p_log, v

@@ -5,7 +5,7 @@ from tqdm import tqdm
 def results2str(results):
 	return f"Yellow={results[+1]} | Red={results[-1]} | Draw={results[0]}"
 
-def self_play(net, num_games, max_moves, num_simulations):
+def self_play(net, num_games, num_simulations):
 	results = { +1: 0, 0: 0, -1: 0 }
 	self_play_data = []
 

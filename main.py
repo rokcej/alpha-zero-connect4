@@ -5,33 +5,40 @@ from train import train
 import os
 import torch
 import pickle
+import matplotlib.pyplot as plt
 
-MODEL_DIR  = "data/models"
-MODEL_NAME = "model.pt"
-SAVE_FILE  = os.path.join(MODEL_DIR, MODEL_NAME)
+SAVE_DIR  = "data/models"
 
-NUM_STEPS = 30
-NUM_GAMES = 10
-MAX_MOVES = 300 # Originally 512
-NUM_SIMULATIONS = 200 # Originally 800
-NUM_EPOCHS = 20
-BATCH_SIZE = 128
+NUM_STEPS = 5
+# Self-play
+NUM_GAMES = 5
+NUM_SIMULATIONS = 25 # Originally 800
+# Training
+NUM_EPOCHS = 10
+BATCH_SIZE = 64
+LEARNING_RATE = 0.1
+LR_DECAY = 0.1
+LR_SCHEDULE = [ 50, 100, 150 ]
 
 if __name__ == "__main__":
 	net = AlphaZeroNet()
 	net.cuda()
 
+	save_file = os.path.join(SAVE_DIR, "model.pt")
+
 	step_start = 0
-	if os.path.isfile(SAVE_FILE):
+	if os.path.isfile(save_file):
 		print("Loading old network...")
-		load_checkpoint = torch.load(SAVE_FILE)
+		load_checkpoint = torch.load(save_file)
 		net.load_state_dict(load_checkpoint["state_dict"])
 		step_start = load_checkpoint["step"]
 	else:
-		if not os.path.exists(MODEL_DIR):
-			os.mkdir(MODEL_DIR)
 		print("Initializing new network...")
+		if not os.path.exists(SAVE_DIR):
+			os.makedirs(SAVE_DIR)
 		net.initialize_parameters()
+
+	avg_losses = []
 
 	for step in range(step_start, step_start + NUM_STEPS):
 		print(f"Step {step + 1}")
@@ -39,28 +46,31 @@ if __name__ == "__main__":
 		# Generate training data
 		net.eval()
 		with torch.no_grad():
-			train_data = self_play(net, NUM_GAMES, MAX_MOVES, NUM_SIMULATIONS)
-
-		# Save training data
-		with open(os.path.join(MODEL_DIR, f"train_data_{step}.pckl"), "wb") as f:
-			pickle.dump(train_data, f)
+			train_data = self_play(net, NUM_GAMES, NUM_SIMULATIONS)
 
 		# Train network
 		net.train()
-		train(net, train_data, NUM_EPOCHS, BATCH_SIZE)
+		learning_rate = LEARNING_RATE
+		for milestone in LR_SCHEDULE:
+			if step >= milestone: learning_rate *= LR_DECAY 
+		avg_loss = train(net, train_data, NUM_EPOCHS, BATCH_SIZE, learning_rate)
+		avg_losses.append(avg_loss)
 
 		# Save network
-		print("Saving... ", end="")
 		save_checkpoint = { 
 			"state_dict": net.state_dict(),
-			"step": step + 1
+			"step": step + 1,
+			"avg_losses": avg_losses
 		}
-		torch.save(save_checkpoint, SAVE_FILE + ".bak") # Backup
-		torch.save(save_checkpoint, SAVE_FILE)
-		if (step + 1) % 10 == 0:
-			torch.save(save_checkpoint, SAVE_FILE + f".step{step + 1}") # Milestone
+		torch.save(save_checkpoint, save_file + ".bak") # Backup
+		torch.save(save_checkpoint, save_file)
+		if (step + 1) % 20 == 0:
+			torch.save(save_checkpoint, save_file + f".step{step + 1}") # Milestone
 
-		torch.cuda.empty_cache()
+		# torch.cuda.empty_cache()
 
-		print("Done!")
+	plt.plot(avg_losses)
+	plt.xlabel("Step")
+	plt.ylabel("Loss")
+	plt.savefig(os.path.join(SAVE_DIR, f"loss_{step_start}-{step_start + NUM_STEPS - 1}.png"), dpi=150)
 
