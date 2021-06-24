@@ -102,7 +102,10 @@ def expand(node: Node, game: Game, net):
 			prior /= p_sum
 		else:
 			prior = 1.0 / len(actions)
-			print("Warning: policy sum is zero (overfitting is a possibility)")
+			global WARNINGS_LEFT
+			if WARNINGS_LEFT > 0:
+				print(f"Warning: policy sum is zero ({WARNINGS_LEFT} warnings left)")
+				WARNINGS_LEFT -= 1
 
 		node.children[action] = Node(prior, -node.to_play)
 
