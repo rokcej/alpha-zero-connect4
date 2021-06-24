@@ -65,6 +65,7 @@ def test(net: AlphaZeroNet, num_games):
 	net2 = AlphaZeroNet()
 	net2.cuda()
 	net2.initialize_parameters()
+	net2.eval()
 	
 	with tqdm(total=num_games, desc="Playing games", unit="game") as prog_bar:
 		for i_game in range(num_games):
