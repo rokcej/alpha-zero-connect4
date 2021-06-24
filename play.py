@@ -23,28 +23,8 @@ def play_move_player(game: Game, gui: GUI):
 		gui.draw()
 		gui.handle_events()
 
-
-# def play_move_ai_without_mcts(game: Game, net: AlphaZeroNet):
-# 	s = game.get_state().unsqueeze(0).cuda()
-# 	p, v = net(s)
-# 	p = p.squeeze(0).detach().cpu().numpy()
-# 	v = v.squeeze(0).item()
-
-# 	actions = game.get_actions()
-# 	probs = p[actions]
-
-# 	_, a = max((prob, action) for prob, action in zip(probs, actions))
-# 	game.apply(a)
-	
-# 	time.sleep(0.5)
-
 def play_move_ai_mcts(game: Game, net: AlphaZeroNet):
-	pi, a, root = mcts(net, game, 1)
-
-	# actions = game.get_actions()
-	# for prob, move, action in zip(pi[actions], [endec.decode_action(action, game.board) for action in actions], actions):
-	# 	print(prob, move, root.children[action].P, root.children[action].N, root.children[action].W, root.children[action].Q)
-
+	pi, a, root = mcts(net, game, 5)
 	game.apply(a)
 
 
@@ -81,6 +61,10 @@ def play(net: AlphaZeroNet):
 
 def test(net: AlphaZeroNet, num_games):
 	results = { +1: 0, -1: 0, 0: 0 }
+
+	net2 = AlphaZeroNet()
+	net2.cuda()
+	net2.initialize_parameters()
 	
 	with tqdm(total=num_games, desc="Playing games", unit="game") as prog_bar:
 		for i_game in range(num_games):
@@ -91,8 +75,8 @@ def test(net: AlphaZeroNet, num_games):
 					play_move_ai_mcts(game, net)
 					# play_move_random(game)
 				else: # Red
-					# play_move_ai_mcts(game, net)
-					play_move_random(game)
+					play_move_ai_mcts(game, net2)
+					# play_move_random(game)
 					
 			
 			results[game.outcome()] += 1
@@ -111,8 +95,7 @@ if __name__ == "__main__":
 	net = AlphaZeroNet()
 	net.cuda()
 
-	net.initialize_parameters()
-	# net.load_state_dict(torch.load("data/models/model.pt")["state_dict"])
+	net.load_state_dict(torch.load("data/model.pt")["state_dict"])
 
 	net.eval()
 

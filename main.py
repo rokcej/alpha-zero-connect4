@@ -7,7 +7,7 @@ import torch
 import pickle
 import matplotlib.pyplot as plt
 
-SAVE_DIR  = "data/models"
+SAVE_DIR  = "data/reinforcement"
 
 NUM_STEPS = 100
 # Self-play
