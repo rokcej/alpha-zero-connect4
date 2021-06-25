@@ -71,5 +71,5 @@ if __name__ == "__main__":
 	plt.plot(avg_losses)
 	plt.xlabel("Step")
 	plt.ylabel("Loss")
-	plt.savefig(os.path.join(SAVE_DIR, f"loss_{step_start}-{step_start + NUM_STEPS - 1}.png"), dpi=150)
+	plt.savefig(os.path.join(SAVE_DIR, f"loss_{len(avg_losses)}.png"), dpi=150)
 
