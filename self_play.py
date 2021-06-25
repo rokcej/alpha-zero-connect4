@@ -2,11 +2,8 @@ from game import Game
 from mcts import mcts
 from tqdm import tqdm
 
-def results2str(results):
-	return f"Yellow={results[+1]} | Red={results[-1]} | Draw={results[0]}"
-
 def self_play(net, num_games, num_simulations):
-	results = { +1: 0, 0: 0, -1: 0 }
+	results = { +1: 0, -1: 0, 0: 0 }
 	self_play_data = []
 
 	with tqdm(total=num_games, desc="Self play", unit="game") as prog_bar:
@@ -14,15 +11,12 @@ def self_play(net, num_games, num_simulations):
 			game = Game()
 			game_data = []
 
-			root = None
-
 			while not game.is_over():
-				pi, action, root = mcts(net, game, num_simulations, root) # Reuse MCTS results
+				pi, action = mcts(net, game, num_simulations) # Reuse MCTS results
 
 				for s in game.get_state_symmetries():
 					game_data.append([s, pi, game.to_play()])
 				game.apply(action)
-				root = root.children[action]
 
 			z = game.outcome()
 			results[z] += 1
@@ -32,8 +26,7 @@ def self_play(net, num_games, num_simulations):
 			
 			self_play_data.extend(game_data)
 
-			prog_bar.set_postfix_str(results2str(results))
+			prog_bar.set_postfix_str(f"Yellow={results[+1]} | Red={results[-1]} | Draw={results[0]}")
 			prog_bar.update(1)
 	
 	return self_play_data
-

@@ -25,12 +25,12 @@ class AlphaZeroLoss(nn.Module):
 
 		return torch.mean(loss_v.view(-1) + loss_p)
 
-def train(net, train_data, num_epochs, batch_size, learning_rate):
+def train(net, train_data, num_epochs, batch_size, learning_rate, weight_decay):
 	train_set = SelfPlayDataset(train_data)
 	train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0)
 	
 	criterion = AlphaZeroLoss()
-	optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=1e-6)
+	optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay)
 
 	avg_avg_loss = 0.0
 

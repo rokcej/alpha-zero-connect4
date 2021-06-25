@@ -2,6 +2,18 @@ from game import Game
 import math
 import numpy as np
 
+# Move choice
+NUM_SAMPLING_MOVES = 10 # 30 for chess
+TEMPERATURE = 1.0
+# Root exploration
+DIRICHLET_ALPHA = 1.0 # 0.3 for chess
+EXPLORATION_FRACTION = 0.2 # 0.25 for chess
+# PUCT UCB Score
+UCB_C_BASE = 19652
+UCB_C_INIT = 1.25
+
+WARNINGS_LEFT = 5
+
 class Node():
 	def __init__(self, P: float, to_play: int):
 		self.P = P
@@ -15,24 +27,21 @@ class Node():
 
 # Upper confidence bound
 def ucb(parent, child):
-	c_base = 19652
-	c_init = 1.25
-	C = math.log((1 + parent.N + c_base) / c_base) + c_init
+	C = math.log((1 + parent.N + UCB_C_BASE) / UCB_C_BASE) + UCB_C_INIT
 	U = C * child.P * math.sqrt(parent.N) / (1 + child.N)
 
-	return -child.Q + U # Minus cause child has opposite sign
+	return -child.Q + U # Minus because child has opposite sign
 
 # Monte Carlo tree search
-def mcts(net, game: Game, num_simulations, root=None):
-	if root is None:
-		root = Node(0, game.to_play())
+def mcts(net, game: Game, num_simulations, eval=False):
+	root = Node(0, game.to_play())
+	expand(root, game, net)
 
-	if len(root.children) == 0:
-		expand(root, game, net)
+	if not eval:
 		# Dirichlet noise
-		actions = root.children.keys()
-		noise = np.random.gamma(1.0, 1, len(actions)) # 0.3 for chess
-		frac = 0.25
+		actions = list(root.children)
+		noise = np.random.gamma(DIRICHLET_ALPHA, 1, len(actions)) # 0.3 for chess
+		frac = EXPLORATION_FRACTION
 		for a, n in zip(actions, noise):
 			root.children[a].P = root.children[a].P * (1.0 - frac) + n * frac
 
@@ -44,10 +53,10 @@ def mcts(net, game: Game, num_simulations, root=None):
 		while len(node.children) > 0:
 			# Select action
 			action = None
-			max_score = None
+			max_score = -math.inf
 			for _action, _child in node.children.items():
 				score = ucb(node, _child)
-				if max_score is None or score > max_score:
+				if action is None or score > max_score:
 					max_score = score
 					action = _action
 
@@ -55,31 +64,28 @@ def mcts(net, game: Game, num_simulations, root=None):
 			path.append(node)
 			game_sim.apply(action)
 		
-		value = expand(node, game_sim, net)
+		abs_value = expand(node, game_sim, net)
 
 		for _node in path:
 			_node.N += 1
-			_node.W += value * _node.to_play
+			_node.W += abs_value * _node.to_play
 			_node.Q = _node.W / _node.N
 
 	# Get policy
-	temp = 1
 	pi = np.zeros(game.action_space)
-	N_sum = sum(child.N for child in root.children.values())
+
+	N_sum = sum(child.N ** (1.0 / TEMPERATURE) for child in root.children.values())
 	for action, child in root.children.items():
-		pi[action] = (child.N ** (1.0 / temp)) / N_sum
+		pi[action] = (child.N ** (1.0 / TEMPERATURE)) / N_sum
 
 	# Get best action
-	# _, best_action = max([(c.N, a) for a, c in root.children.items()])
-	actions = list(root.children.keys())
-	probs = pi[actions]
-	if game_sim.num_moves() < 10: # Softmax sample
-		probs = softmax(probs) # Is this necessary?
+	if not eval and game_sim.num_moves() < NUM_SAMPLING_MOVES: # Probabilisticaly sample best move
+		actions = list(root.children)
 		best_action = np.random.choice(actions, p=pi[actions])
-	else: # Max probability
-		best_action = actions[np.argmax(probs)]
+	else: # Choose move with highest probability
+		best_action = np.argmax(pi)
 
-	return pi, best_action, root
+	return pi, best_action
 
 # Expand leaf node
 # Return absolute outcome
@@ -100,7 +106,7 @@ def expand(node: Node, game: Game, net):
 		prior = p[action].item()
 		if p_sum > 0.0:
 			prior /= p_sum
-		else:
+		else: # Dirty fix
 			prior = 1.0 / len(actions)
 			global WARNINGS_LEFT
 			if WARNINGS_LEFT > 0:

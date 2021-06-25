@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+NUM_FILTERS = 256
+
 # Connect 4 version
 
 # N.B. The forward pass returns the logarithm of probabilities!
@@ -10,7 +12,7 @@ class AlphaZeroNet(nn.Module):
 		super(AlphaZeroNet, self).__init__()
 
 		self.conv_block = ConvBlock()
-		self.res_blocks = nn.ModuleList([ ResBlock() for i in range(5) ]) # Originally 19
+		self.res_blocks = nn.ModuleList([ ResBlock() for i in range(19) ]) # Originally 19
 		self.out_block = OutBlock()
 
 	def initialize_parameters(self):
@@ -45,8 +47,8 @@ class ConvBlock(nn.Module):
 	def __init__(self):
 		super(ConvBlock, self).__init__()
 
-		self.conv = nn.Conv2d(2, 256, 3, stride=1, padding=1, bias=False) # Originally 119
-		self.bn = nn.BatchNorm2d(256)
+		self.conv = nn.Conv2d(2, NUM_FILTERS, 3, stride=1, padding=1, bias=False) # Originally 119
+		self.bn = nn.BatchNorm2d(NUM_FILTERS)
 
 	def forward(self, s):
 		out = self.conv(s)
@@ -59,11 +61,11 @@ class ResBlock(nn.Module):
 	def __init__(self):
 		super(ResBlock, self).__init__()
 
-		self.conv1 = nn.Conv2d(256, 256, 3, stride=1, padding=1, bias=False)
-		self.bn1 = nn.BatchNorm2d(256)
+		self.conv1 = nn.Conv2d(NUM_FILTERS, NUM_FILTERS, 3, stride=1, padding=1, bias=False)
+		self.bn1 = nn.BatchNorm2d(NUM_FILTERS)
 
-		self.conv2 = nn.Conv2d(256, 256, 3, stride=1, padding=1, bias=False)
-		self.bn2 = nn.BatchNorm2d(256)
+		self.conv2 = nn.Conv2d(NUM_FILTERS, NUM_FILTERS, 3, stride=1, padding=1, bias=False)
+		self.bn2 = nn.BatchNorm2d(NUM_FILTERS)
 
 	def forward(self, s):
 		out = self.conv1(s)
@@ -83,16 +85,16 @@ class OutBlock(nn.Module):
 		super(OutBlock, self).__init__()
 
 		# Policy head
-		self.conv1_p = nn.Conv2d(256, 256, 1, stride=1, bias=False)
-		self.bn_p = nn.BatchNorm2d(256)
-		# self.conv2_p = nn.Conv2d(256, 7, 1, stride=1, bias=False) # Originally 73
-		self.fc1_p = nn.Linear(256 * 6 * 7, 7)
+		self.conv1_p = nn.Conv2d(NUM_FILTERS, NUM_FILTERS, 1, stride=1, bias=False)
+		self.bn_p = nn.BatchNorm2d(NUM_FILTERS)
+		# self.conv2_p = nn.Conv2d(NUM_FILTERS, 7, 1, stride=1, bias=False) # Originally 73
+		self.fc1_p = nn.Linear(NUM_FILTERS * 6 * 7, 7)
 
 		# Value head
-		self.conv_v = nn.Conv2d(256, 1, 1, stride=1, bias=False)
+		self.conv_v = nn.Conv2d(NUM_FILTERS, 1, 1, stride=1, bias=False)
 		self.bn_v = nn.BatchNorm2d(1)
-		self.fc1_v = nn.Linear(1 * 6 * 7, 256)
-		self.fc2_v = nn.Linear(256, 1)
+		self.fc1_v = nn.Linear(1 * 6 * 7, NUM_FILTERS)
+		self.fc2_v = nn.Linear(NUM_FILTERS, 1)
 
 	def forward(self, s):
 		# Policy head

@@ -24,7 +24,7 @@ def play_move_player(game: Game, gui: GUI):
 		gui.handle_events()
 
 def play_move_ai_mcts(game: Game, net: AlphaZeroNet):
-	pi, a, root = mcts(net, game, 5)
+	pi, a, root = mcts(net, game, 25)
 	game.apply(a)
 
 
@@ -64,7 +64,8 @@ def test(net: AlphaZeroNet, num_games):
 
 	net2 = AlphaZeroNet()
 	net2.cuda()
-	net2.initialize_parameters()
+	#net2.initialize_parameters()
+	net2.load_state_dict(torch.load("data/model.pt")["state_dict"])
 	net2.eval()
 	
 	with tqdm(total=num_games, desc="Playing games", unit="game") as prog_bar:
@@ -96,7 +97,7 @@ if __name__ == "__main__":
 	net = AlphaZeroNet()
 	net.cuda()
 
-	net.load_state_dict(torch.load("data/model.pt")["state_dict"])
+	net.load_state_dict(torch.load("data/model199.pt")["state_dict"])
 
 	net.eval()
 
