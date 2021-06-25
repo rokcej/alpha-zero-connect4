@@ -1,4 +1,4 @@
-# AlphaZero Chess
+# AlphaZero Connect Four
 
 ## Dependencies
 
