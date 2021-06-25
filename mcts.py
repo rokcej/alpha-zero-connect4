@@ -1,6 +1,7 @@
-from game import Game
 import math
 import numpy as np
+
+from game import Game
 
 # Move choice
 NUM_SAMPLING_MOVES = 10 # 30 for chess

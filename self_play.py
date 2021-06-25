@@ -1,6 +1,7 @@
+from tqdm import tqdm
+
 from game import Game
 from mcts import mcts
-from tqdm import tqdm
 
 def self_play(net, num_games, num_simulations):
 	results = { +1: 0, -1: 0, 0: 0 }
