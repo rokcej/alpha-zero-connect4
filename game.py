@@ -80,7 +80,7 @@ class Game():
 		for dd1 in range(1, min(x_max-x_move, y_max-y_move) + 1): # NE
 			if self.board[y_move+dd1, x_move+dd1] == self.turn: diag1 += 1
 			else: break
-		for dd1 in range(1, max(x_move-x_min, y_move-y_min) + 1): # SW
+		for dd1 in range(1, min(x_move-x_min, y_move-y_min) + 1): # SW
 			if self.board[y_move-dd1, x_move-dd1] == self.turn: diag1 += 1
 			else: break
 
