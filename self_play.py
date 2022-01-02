@@ -11,9 +11,11 @@ def self_play(net, num_games, num_simulations):
 		for i_game in range(num_games):
 			game = Game()
 			game_data = []
+			root = None
 
 			while not game.is_over():
-				pi, action = mcts(net, game, num_simulations) # Reuse MCTS results
+				pi, action, root = mcts(net, game, num_simulations, root=root) # Reuse MCTS results
+				root = root.children[action]
 
 				for s in game.get_state_symmetries():
 					game_data.append([s, pi, game.to_play()])
@@ -21,6 +23,8 @@ def self_play(net, num_games, num_simulations):
 
 			z = game.outcome()
 			results[z] += 1
+
+			# TODO: Remove duplicates (average their policies and values)
 
 			for i in range(len(game_data)):
 				game_data[i][2] *= z

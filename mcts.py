@@ -8,10 +8,11 @@ NUM_SAMPLING_MOVES = 10 # 30 for chess
 TEMPERATURE = 1.0
 # Root exploration
 DIRICHLET_ALPHA = 1.0 # 0.3 for chess
-EXPLORATION_FRACTION = 0.2 # 0.25 for chess
+EXPLORATION_FRACTION = 0.25 # 0.25 for chess
 # PUCT UCB Score
 UCB_C_BASE = 19652
 UCB_C_INIT = 1.25
+UCB_C = 4
 
 WARNINGS_LEFT = 5
 
@@ -28,20 +29,24 @@ class Node():
 
 # Upper confidence bound
 def ucb(parent, child):
-	C = math.log((1 + parent.N + UCB_C_BASE) / UCB_C_BASE) + UCB_C_INIT
+	C = UCB_C # math.log((1 + parent.N + UCB_C_BASE) / UCB_C_BASE) + UCB_C_INIT
 	U = C * child.P * math.sqrt(parent.N) / (1 + child.N)
 
 	return -child.Q + U # Minus because child has opposite sign
 
 # Monte Carlo tree search
-def mcts(net, game: Game, num_simulations, eval=False):
-	root = Node(0, game.to_play())
-	expand(root, game, net)
+def mcts(net, game: Game, num_simulations, root=None, eval=False):
+	if root is None:
+		root = Node(0, game.to_play())
+
+	if len(root.children) == 0:
+		expand(root, game, net)
 
 	if not eval:
 		# Dirichlet noise
 		actions = list(root.children)
-		noise = np.random.gamma(DIRICHLET_ALPHA, 1, len(actions)) # 0.3 for chess
+		# noise = np.random.gamma(DIRICHLET_ALPHA, 1, len(actions)) # 0.3 for chess
+		noise = np.random.dirichlet((DIRICHLET_ALPHA,) * len(actions))
 		frac = EXPLORATION_FRACTION
 		for a, n in zip(actions, noise):
 			root.children[a].P = root.children[a].P * (1.0 - frac) + n * frac
@@ -80,13 +85,13 @@ def mcts(net, game: Game, num_simulations, eval=False):
 		pi[action] = (child.N ** (1.0 / TEMPERATURE)) / N_sum
 
 	# Get best action
-	if not eval and game_sim.num_moves() < NUM_SAMPLING_MOVES: # Probabilisticaly sample best move
+	if not eval and game.num_moves() < NUM_SAMPLING_MOVES: # Probabilisticaly sample best move
 		actions = list(root.children)
 		best_action = np.random.choice(actions, p=pi[actions])
 	else: # Choose move with highest probability
 		best_action = np.argmax(pi)
 
-	return pi, best_action
+	return pi, best_action, root
 
 # Expand leaf node
 # Return absolute outcome

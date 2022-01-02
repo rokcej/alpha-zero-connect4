@@ -74,7 +74,7 @@ class Game():
 			if self.board[y, x_move] == self.turn: vert += 1
 			else: break
 		for y in reversed(range(y_min, y_move)): # Down
-			if self.board[y,x_move] == self.turn: vert += 1
+			if self.board[y, x_move] == self.turn: vert += 1
 			else: break
 
 		for dd1 in range(1, min(x_max-x_move, y_max-y_move) + 1): # NE
@@ -124,13 +124,17 @@ class Game():
 		return self.turn
 
 	def encode_board(self):
-		M = np.zeros((2, 6, 7), dtype=np.float)
-		for y in range(6):
-			for x in range(7):
-				if self.board[y, x] == self.turn:
-					M[0, y, x] = 1.0
-				elif self.board[y, x] == -self.turn:
-					M[1, y, x] = 1.0
+		M = np.zeros((3, 6, 7), dtype=np.float)
+		M[0, self.board == +1] = 1.0
+		M[1, self.board == -1] = 1.0
+		# for y in range(6):
+		# 	for x in range(7):
+		# 		if self.board[y, x] == 1:
+		# 			M[0, y, x] = 1.0
+		# 		elif self.board[y, x] == -1:
+		# 			M[1, y, x] = 1.0
+		if self.turn == -1:
+			M[2, :, :] = 1.0
 		return M
 
 

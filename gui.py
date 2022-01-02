@@ -7,8 +7,8 @@ HEIGHT = 600
 DX = WIDTH / 7
 DY = HEIGHT / 6
 
-LIGHT_SQUARE = (64, 72, 189)
-DARK_SQUARE = (52, 59, 158)
+LIGHT_BLUE = (64, 72, 189)
+DARK_BLUE = (52, 59, 158)
 YELLOW = (180, 180, 50)
 RED = (200, 70, 70)
 PIECE_COLORS = [ YELLOW, RED ]
@@ -20,7 +20,7 @@ class GUI():
 		self.board = board
 
 		pygame.init()
-		pygame.display.set_caption("AlphaZero Connect 4")
+		pygame.display.set_caption("Connect 4")
 
 		self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 		self.running = True
@@ -38,24 +38,25 @@ class GUI():
 				self.clicked = (ix, iy)
 		
 	def draw_board(self):
-		for y in range(8):
-			for x in range(8):
-				color = LIGHT_SQUARE if (x + y) % 2 == 0 else DARK_SQUARE
-				self.screen.fill(color, pygame.Rect(x * DX, y * DY, (x + 1) * DX, (y + 1) * DY))
+		self.screen.fill(LIGHT_BLUE)
+		for y in range(6):
+			for x in range(7):
+				cx, cy = self.get_center(x, y)
+				r = 0.45 * min(DX, DY)
+				pygame.draw.circle(self.screen, DARK_BLUE, (cx, cy), r)
 
 	def draw_pieces(self):
 		for x in range(7):
 			for y in range(6):
 				piece = self.board[y, x]
 				if piece != 0:
-					cx = (x + 0.5) * DX
-					cy = (5.5 - y) * DY
+					cx, cy = self.get_center(x, y)
 					r = 0.4 * min(DX, DY)
 					color = YELLOW if piece == 1 else RED
 					pygame.draw.circle(self.screen, color, (cx, cy), r)
 
-	def get_rect(self, file, rank):
-		return pygame.Rect(file * DX, (5 - rank) * DY, (file + 1) * DX, (6 - rank) * DY)
+	def get_center(self, col, row):
+		return (col + 0.5) * DX, (5.5 - row) * DY
 
 	def get_square(self, x, y):
 		ix = (x * 7) // WIDTH

@@ -8,16 +8,16 @@ from train import train
 
 SAVE_DIR  = "data/reinforcement"
 
-NUM_STEPS = 100
+NUM_STEPS = 1000
 # Self-play
-NUM_GAMES = 128
-NUM_SIMULATIONS = 50 # Originally 800
+NUM_GAMES = 64
+NUM_SIMULATIONS = 100 # Originally 800
 # Training
 NUM_EPOCHS = 10
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 LEARNING_RATE = 0.2
 LR_DECAY = 0.1
-LR_SCHEDULE = [ 1000, 3000, 5000 ]
+LR_SCHEDULE = [ 100, 300, 500 ]
 WEIGHT_DECAY = 1e-4
 
 if __name__ == "__main__":

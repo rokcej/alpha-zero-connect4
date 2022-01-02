@@ -2,23 +2,24 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-NUM_FILTERS = 256
+NUM_FILTERS = 128
 
 # Connect 4 version
 
 # N.B. The forward pass returns the logarithm of probabilities!
 class AlphaZeroNet(nn.Module):
-	def __init__(self):
+	def __init__(self, num_res_blocks=19):
 		super(AlphaZeroNet, self).__init__()
 
 		self.conv_block = ConvBlock()
-		self.res_blocks = nn.ModuleList([ ResBlock() for i in range(19) ]) # Originally 19
+		self.res_blocks = nn.ModuleList([ResBlock() for _ in range(num_res_blocks)]) # Originally 19
 		self.out_block = OutBlock()
 
 	def initialize_parameters(self):
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
-				nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+				# nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+				pass
 			elif isinstance(m, nn.BatchNorm2d):
 				nn.init.constant_(m.weight, 1)
 				nn.init.constant_(m.bias, 0)
@@ -47,7 +48,7 @@ class ConvBlock(nn.Module):
 	def __init__(self):
 		super(ConvBlock, self).__init__()
 
-		self.conv = nn.Conv2d(2, NUM_FILTERS, 3, stride=1, padding=1, bias=False) # Originally 119
+		self.conv = nn.Conv2d(3, NUM_FILTERS, 3, stride=1, padding=1, bias=False) # Originally 119
 		self.bn = nn.BatchNorm2d(NUM_FILTERS)
 
 	def forward(self, s):
@@ -85,10 +86,10 @@ class OutBlock(nn.Module):
 		super(OutBlock, self).__init__()
 
 		# Policy head
-		self.conv1_p = nn.Conv2d(NUM_FILTERS, NUM_FILTERS, 1, stride=1, bias=False)
-		self.bn_p = nn.BatchNorm2d(NUM_FILTERS)
+		self.conv1_p = nn.Conv2d(NUM_FILTERS, 2, 1, stride=1, bias=False)
+		self.bn_p = nn.BatchNorm2d(2)
 		# self.conv2_p = nn.Conv2d(NUM_FILTERS, 7, 1, stride=1, bias=False) # Originally 73
-		self.fc1_p = nn.Linear(NUM_FILTERS * 6 * 7, 7)
+		self.fc1_p = nn.Linear(2 * 6 * 7, 7)
 
 		# Value head
 		self.conv_v = nn.Conv2d(NUM_FILTERS, 1, 1, stride=1, bias=False)

@@ -24,7 +24,7 @@ def play_move_player(game: Game, gui: GUI):
 		gui.handle_events()
 
 def play_move_ai_mcts(game: Game, net: AlphaZeroNet):
-	pi, a, root = mcts(net, game, 25)
+	pi, a, _ = mcts(net, game, 100, eval=True)
 	game.apply(a)
 
 
@@ -33,7 +33,7 @@ def play_move_random(game: Game):
 	game.apply(a)
 
 
-def play(net: AlphaZeroNet):
+def play(net: AlphaZeroNet, net2: AlphaZeroNet):
 	game = Game()
 
 	gui = GUI(game.board)
@@ -41,12 +41,12 @@ def play(net: AlphaZeroNet):
 	
 	while not game.is_over():
 		if game.to_play() == 1: # Yellow
-			play_move_player(game, gui)
-			# play_move_ai_mcts(game, net)
-			# play_move_random(game)
-		else: # Red
 			# play_move_player(game, gui)
 			play_move_ai_mcts(game, net)
+			# play_move_random(game)
+		else: # Red
+			play_move_player(game, gui)
+			# play_move_ai_mcts(game, net2)
 			# play_move_random(game)
 
 		gui.draw()
@@ -59,21 +59,15 @@ def play(net: AlphaZeroNet):
 		gui.handle_events()
 
 
-def test(net: AlphaZeroNet, num_games):
+def test(net: AlphaZeroNet, net2: AlphaZeroNet, num_games):
 	results = { +1: 0, -1: 0, 0: 0 }
-
-	net2 = AlphaZeroNet()
-	net2.cuda()
-	#net2.initialize_parameters()
-	net2.load_state_dict(torch.load("data/model.pt")["state_dict"])
-	net2.eval()
 	
 	with tqdm(total=num_games, desc="Playing games", unit="game") as prog_bar:
 		for i_game in range(num_games):
 			game = Game()
 
 			while not game.is_over():
-				if game.to_play() == 1: # Yellow
+				if game.to_play() == -1: # Yellow
 					play_move_ai_mcts(game, net)
 					# play_move_random(game)
 				else: # Red
@@ -96,14 +90,19 @@ def test(net: AlphaZeroNet, num_games):
 if __name__ == "__main__":
 	net = AlphaZeroNet()
 	net.cuda()
-
-	net.load_state_dict(torch.load("data/model199.pt")["state_dict"])
-
+	# net.initialize_parameters()
+	net.load_state_dict(torch.load("data/reinforcement/model.pt")["state_dict"])
 	net.eval()
+
+	net2 = AlphaZeroNet()
+	net2.cuda()
+	net2.initialize_parameters()
+	# net2.load_state_dict(torch.load("data/model160_19.pt")["state_dict"])
+	net2.eval()
 
 	with torch.no_grad():
 		if len(sys.argv) > 1 and sys.argv[1] == "test":
 			num_games = int(sys.argv[2]) if len(sys.argv) > 2 else 100
-			test(net, num_games)
+			test(net, net2, num_games)
 		else:
-			play(net)
+			play(net, net2)
