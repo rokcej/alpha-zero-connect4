@@ -33,7 +33,7 @@ def play_move_random(game: Game):
 	game.apply(a)
 
 
-def play(net: AlphaZeroNet, net2: AlphaZeroNet):
+def play(net: AlphaZeroNet):
 	game = Game()
 
 	gui = GUI(game.board)
@@ -46,7 +46,7 @@ def play(net: AlphaZeroNet, net2: AlphaZeroNet):
 			# play_move_random(game)
 		else: # Red
 			play_move_player(game, gui)
-			# play_move_ai_mcts(game, net2)
+			# play_move_ai_mcts(game, net)
 			# play_move_random(game)
 
 		gui.draw()
@@ -67,7 +67,7 @@ def test(net: AlphaZeroNet, net2: AlphaZeroNet, num_games):
 			game = Game()
 
 			while not game.is_over():
-				if game.to_play() == -1: # Yellow
+				if game.to_play() == 1: # Yellow
 					play_move_ai_mcts(game, net)
 					# play_move_random(game)
 				else: # Red
@@ -91,13 +91,13 @@ if __name__ == "__main__":
 	net = AlphaZeroNet()
 	net.cuda()
 	# net.initialize_parameters()
-	net.load_state_dict(torch.load("data/reinforcement/model.pt")["state_dict"])
+	net.load_state_dict(torch.load("data/model.pt")["state_dict"])
 	net.eval()
 
 	net2 = AlphaZeroNet()
 	net2.cuda()
-	net2.initialize_parameters()
-	# net2.load_state_dict(torch.load("data/model160_19.pt")["state_dict"])
+	# net2.initialize_parameters()
+	net2.load_state_dict(torch.load("data/model.pt")["state_dict"])
 	net2.eval()
 
 	with torch.no_grad():
@@ -105,4 +105,6 @@ if __name__ == "__main__":
 			num_games = int(sys.argv[2]) if len(sys.argv) > 2 else 100
 			test(net, net2, num_games)
 		else:
-			play(net, net2)
+			play(net)
+
+

@@ -40,7 +40,6 @@ if __name__ == "__main__":
 			os.makedirs(SAVE_DIR)
 		net.initialize_parameters()
 
-
 	for step in range(step_start, step_start + NUM_STEPS):
 		print(f"Step {step + 1}")
 
